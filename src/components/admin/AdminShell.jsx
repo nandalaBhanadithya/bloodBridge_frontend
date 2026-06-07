@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../hooks/useAuth'
 import AdminSidebar from './AdminSidebar'
 import Overview from './sections/Overview'
 import Patients from './sections/Patients'

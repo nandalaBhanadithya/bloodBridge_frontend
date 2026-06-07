@@ -1,9 +1,63 @@
 import { useState, useEffect } from 'react'
-import PriorityQueue from '../PriorityQueue'
 import MetricCard from '../../shared/MetricCard'
 import FeedItem from '../../shared/FeedItem'
-import Heatmap from '../Heatmap'
 import { api } from '../../../services/api'
+
+function PriorityQueue() {
+  const registrations = [
+    { id: 1, name: 'Ravi Kumar', bloodGroup: 'B+', hospital: 'City Hospital', submitted: '2h ago', priority: 'high' },
+    { id: 2, name: 'Sunita Reddy', bloodGroup: 'O+', hospital: 'Gandhi Hospital', submitted: '5h ago', priority: 'medium' },
+    { id: 3, name: 'Anonymous', bloodGroup: 'A+', hospital: 'Ameerpet Clinic', submitted: '1d ago', priority: 'high' },
+  ]
+
+  return (
+    <div className="pq-wrap">
+      <div className="pq-head">
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>⚑ New registrations needing review</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>{registrations.length} pending</span>
+      </div>
+      {registrations.map((reg) => (
+        <div key={reg.id} style={{ padding: '12px 18px', borderBottom: '1px solid #FEF2F2', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: reg.priority === 'high' ? '#FEF2F2' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: reg.priority === 'high' ? '#DC2626' : '#64748B' }}>
+            {reg.name.charAt(0)}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#0F172A' }}>{reg.name}</div>
+            <div style={{ fontSize: 10, color: '#64748B' }}>{reg.bloodGroup} · {reg.hospital} · {reg.submitted}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ padding: '6px 12px', borderRadius: 6, background: '#16A34A', color: '#fff', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer' }}>Approve</button>
+            <button style={{ padding: '6px 12px', borderRadius: 6, background: 'transparent', color: '#64748B', fontSize: 11, fontWeight: 600, border: '1px solid #E2E8F0', cursor: 'pointer' }}>Review</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Heatmap({ size = 'large', timestampOnly = false }) {
+  const viewBox = size === 'large' ? '0 0 420 300' : '0 0 300 230'
+  
+  if (timestampOnly) {
+    return <span style={{ fontSize: 10, color: '#64748B', marginLeft: 'auto' }}>Updated 2m ago</span>
+  }
+  
+  return (
+    <svg viewBox={viewBox} style={{ width: '100%', height: 'auto' }}>
+      <rect width="420" height="300" fill="#F8FAFC" />
+      <circle cx="201" cy="163" r="32" fill="#16A34A" opacity="0.55" />
+      <circle cx="255" cy="173" r="32" fill="#16A34A" opacity="0.55" />
+      <circle cx="191" cy="218" r="32" fill="#D97706" opacity="0.55" />
+      <circle cx="229" cy="43" r="32" fill="#16A34A" opacity="0.55" />
+      <circle cx="42" cy="123" r="32" fill="#DC2626" opacity="0.55" className="cring" />
+      <text x="201" y="163" fontSize="10" fill="#fff" textAnchor="middle" dominantBaseline="middle">City</text>
+      <text x="255" y="173" fontSize="10" fill="#fff" textAnchor="middle" dominantBaseline="middle">Gandhi</text>
+      <text x="191" y="218" fontSize="10" fill="#fff" textAnchor="middle" dominantBaseline="middle">Nampally</text>
+      <text x="229" y="43" fontSize="10" fill="#fff" textAnchor="middle" dominantBaseline="middle">Secunderabad</text>
+      <text x="42" y="123" fontSize="10" fill="#fff" textAnchor="middle" dominantBaseline="middle">Ameerpet</text>
+    </svg>
+  )
+}
 
 export default function Overview({ totalUnits }) {
   const [overviewData, setOverviewData] = useState(null)

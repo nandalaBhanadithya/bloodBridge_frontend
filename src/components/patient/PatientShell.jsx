@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../hooks/useAuth'
 import PatientHero from './PatientHero'
 import DashboardTab from './sections/DashboardTab'
 import ScheduleTab from './sections/ScheduleTab'

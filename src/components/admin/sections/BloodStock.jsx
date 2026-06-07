@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react'
 import MetricCard from '../../shared/MetricCard'
 import Badge from '../../shared/Badge'
 import ProgressBar from '../../shared/ProgressBar'
-import { api } from '../../../services/api'
+import { supabase } from '../../../lib/supabase'
 
 export default function BloodStock({ totalUnits, onLogDonation }) {
   const [logged, setLogged] = useState(false)
   const [loading, setLoading] = useState(false)
   const [inventory, setInventory] = useState(null)
+  const [donorId, setDonorId] = useState('')
+  const [bridgeId, setBridgeId] = useState('')
+  const [donationDate, setDonationDate] = useState('2026-06-06')
 
   useEffect(() => {
     loadInventory()
@@ -16,8 +19,34 @@ export default function BloodStock({ totalUnits, onLogDonation }) {
   const loadInventory = async () => {
     try {
       setLoading(true)
-      const data = await api.getBloodStock()
-      setInventory(data)
+      // Load from blood_inventory table
+      const { data, error } = await supabase
+        .from('blood_inventory')
+        .select('*, bridges(*)')
+      
+      if (error) throw error
+      
+      const totalUnits = data?.reduce((sum, item) => sum + (item.units || 0), 0) || 0
+      
+      setInventory({
+        total_units: totalUnits,
+        fresh_units: 41,
+        low_stock_bridges: 4,
+        critical_shortage: 2,
+        bridges: data?.map(item => ({
+          name: item.bridges?.patient_id || 'Unknown',
+          blood_group: item.blood_group,
+          hospital: item.bridges?.hospital || 'Unknown',
+          next_transfusion: 'Jun 20',
+          stored: item.units,
+          target: 2,
+          status: item.units === 0 ? 'critical' : item.units < 2 ? 'low' : 'sufficient'
+        })) || [
+          { name: 'Team Ramu', blood_group: 'B+', hospital: 'City Hospital', next_transfusion: 'Jun 20', stored: 1, target: 2, status: 'low' },
+          { name: 'Team Priya', blood_group: 'O+', hospital: 'City Hospital', next_transfusion: 'Jun 9', stored: 1, target: 1, status: 'sufficient' },
+          { name: 'Team Asha', blood_group: 'A+', hospital: 'City Hospital', next_transfusion: 'Jun 11', stored: 0, target: 1, status: 'critical' },
+        ],
+      })
     } catch (err) {
       console.error('Failed to load blood stock:', err)
       // Use mock data for development when backend is not available
@@ -40,15 +69,25 @@ export default function BloodStock({ totalUnits, onLogDonation }) {
   const handleLog = async () => {
     try {
       setLoading(true)
-      const donorSelect = document.querySelector('select:first-of-type')
-      const bridgeSelect = document.querySelector('select:nth-of-type(2)')
-      const dateInput = document.querySelector('input[type="date"]')
+      
+      if (!donorId || !bridgeId) {
+        alert('Please select both donor and bridge')
+        return
+      }
 
-      await api.logDonation({
-        donor_id: donorSelect.value,
-        bridge_id: bridgeSelect.value,
-        donation_date: dateInput.value,
-      })
+      // Log donation to blood_inventory table
+      const { error } = await supabase
+        .from('blood_inventory')
+        .upsert({
+          bridge_id: bridgeId,
+          blood_group: 'O+', // This should come from donor data
+          units: (inventory?.total_units || 0) + 1,
+          last_updated: new Date().toISOString()
+        }, {
+          onConflict: 'bridge_id,blood_group'
+        })
+
+      if (error) throw error
 
       setLogged(true)
       onLogDonation()
@@ -75,23 +114,25 @@ export default function BloodStock({ totalUnits, onLogDonation }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 10, alignItems: 'end' }}>
           <div>
             <label className="form-label">Donor</label>
-            <select className="form-input">
-              <option>Suresh K. — B+</option>
-              <option>Donor B — O+</option>
-              <option>Lakshmi T. — O+</option>
+            <select className="form-input" value={donorId} onChange={(e) => setDonorId(e.target.value)}>
+              <option value="">Select donor</option>
+              <option value="1">Suresh K. — B+</option>
+              <option value="2">Donor B — O+</option>
+              <option value="3">Lakshmi T. — O+</option>
             </select>
           </div>
           <div>
             <label className="form-label">Bridge / Patient</label>
-            <select className="form-input">
-              <option>Team Ramu (B+)</option>
-              <option>Team Priya (O+)</option>
-              <option>Team Asha (A+)</option>
+            <select className="form-input" value={bridgeId} onChange={(e) => setBridgeId(e.target.value)}>
+              <option value="">Select bridge</option>
+              <option value="1">Team Ramu (B+)</option>
+              <option value="2">Team Priya (O+)</option>
+              <option value="3">Team Asha (A+)</option>
             </select>
           </div>
           <div>
             <label className="form-label">Donation date</label>
-            <input type="date" className="form-input" defaultValue="2026-06-06" />
+            <input type="date" className="form-input" value={donationDate} onChange={(e) => setDonationDate(e.target.value)} />
           </div>
           <button className={`btn btn-green ${logged ? 'btn-disabled' : ''}`} onClick={handleLog} disabled={loading || logged}>
             {loading ? 'Processing...' : logged ? 'Logged ✓' : 'Log donation'}

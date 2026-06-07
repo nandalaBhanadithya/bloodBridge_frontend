@@ -1,7 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--r:12px;--r8:8px;--border:#E2E8F0;--muted:#64748B;--bg:#F8FAFC;--card:#fff}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#0F172A;background:var(--bg);font-size:13px}
-h1{font-family:'Syne',sans-serif}
+h1,h2,h3,h4,h5,h6{font-family:'Syne',sans-serif}
 
 .rolebar{background:#0F172A;padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:200}
 .rpill{padding:5px 16px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:.15s}

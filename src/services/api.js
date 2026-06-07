@@ -176,16 +176,32 @@ class ApiService {
     return this.request('/api/patients')
   }
 
+  async getPatient(patientId) {
+    return this.request(`/api/patients/${patientId}`)
+  }
+
+  async getPatientSchedule(patientId) {
+    return this.request(`/api/patients/${patientId}/schedule`)
+  }
+
+  async updatePatient(patientId, data) {
+    return this.request(`/api/patients/${patientId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
   async approvePatient(patientId) {
-    return this.request(`/api/admin/approve-patient/${patientId}`, {
-      method: 'POST',
+    return this.request(`/api/patients/${patientId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ onboarding_status: 'approved' }),
     })
   }
 
   async rejectPatient(patientId, reason) {
-    return this.request(`/api/admin/reject-patient/${patientId}`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
+    return this.request(`/api/patients/${patientId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ onboarding_status: 'rejected', rejection_reason: reason }),
     })
   }
 
@@ -198,10 +214,28 @@ class ApiService {
     return this.request('/api/donors')
   }
 
+  async getDonor(donorId) {
+    return this.request(`/api/donors/${donorId}`)
+  }
+
+  async createDonor(donorData) {
+    return this.request('/api/donors', {
+      method: 'POST',
+      body: JSON.stringify(donorData),
+    })
+  }
+
   async updateDonorStatus(donorId, status) {
     return this.request(`/api/donors/${donorId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    })
+  }
+
+  async holdDonor(donorId, reason) {
+    return this.request(`/api/donors/${donorId}/hold`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
     })
   }
 
@@ -210,26 +244,78 @@ class ApiService {
     return this.request('/api/bridges')
   }
 
+  async getBridge(bridgeId) {
+    return this.request(`/api/bridges/${bridgeId}`)
+  }
+
+  async createBridge(bridgeData) {
+    return this.request('/api/bridges', {
+      method: 'POST',
+      body: JSON.stringify(bridgeData),
+    })
+  }
+
   async assignDonorToBridge(bridgeId, donorId) {
-    return this.request(`/api/bridges/${bridgeId}/assign-donor`, {
+    return this.request(`/api/bridges/${bridgeId}/donors`, {
       method: 'POST',
       body: JSON.stringify({ donor_id: donorId }),
     })
   }
 
+  async updateBridgeFrequency(bridgeId, frequencyData) {
+    return this.request(`/api/bridges/${bridgeId}/frequency`, {
+      method: 'PUT',
+      body: JSON.stringify(frequencyData),
+    })
+  }
+
   // Blood Stock Management Endpoints
-  async getBloodStock() {
-    return this.request('/api/inventory')
+  async getBloodStockDashboard() {
+    return this.request('/api/inventory/dashboard')
+  }
+
+  async getBridgeInventory(bridgeId) {
+    return this.request(`/api/inventory/${bridgeId}`)
   }
 
   async logDonation(donationData) {
-    return this.request('/api/inventory/log-donation', {
+    return this.request('/api/inventory/log', {
       method: 'POST',
       body: JSON.stringify(donationData),
     })
   }
 
-  // Event/Activity Management Endpoints
+  // Cluster Management Endpoints
+  async getCluster(clusterId) {
+    return this.request(`/api/clusters/${clusterId}`)
+  }
+
+  async createMeetingRequest(clusterId, requestData) {
+    return this.request(`/api/clusters/${clusterId}/meeting-request`, {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    })
+  }
+
+  // Activity/Event Management Endpoints
+  async getActivities() {
+    return this.request('/api/activities')
+  }
+
+  async createActivity(activityData) {
+    return this.request('/api/activities', {
+      method: 'POST',
+      body: JSON.stringify(activityData),
+    })
+  }
+
+  async rsvpToActivity(activityId, rsvpData) {
+    return this.request(`/api/activities/${activityId}/rsvp`, {
+      method: 'POST',
+      body: JSON.stringify(rsvpData),
+    })
+  }
+
   async getIntegrationEvents() {
     return this.request('/api/activities/integration-events')
   }
@@ -265,12 +351,57 @@ class ApiService {
     })
   }
 
-  // Density Map Endpoints
+  // Admin Endpoints
+  async getAdminDashboard() {
+    return this.request('/api/admin/dashboard')
+  }
+
   async getDensityMap() {
+    return this.request('/api/admin/density')
+  }
+
+  async getFailureLog() {
+    return this.request('/api/admin/failures')
+  }
+
+  async getAdminReports() {
+    return this.request('/api/admin/reports')
+  }
+
+  async getAdminIntegrationEvents() {
+    return this.request('/api/admin/integration-events')
+  }
+
+  async markIntegrationEventComplete(eventId) {
+    return this.request(`/api/admin/integration-events/${eventId}`, {
+      method: 'PUT',
+    })
+  }
+
+  async getAdminMeetingRequests() {
+    return this.request('/api/admin/meeting-requests')
+  }
+
+  async approveEvent(eventData) {
+    return this.request('/api/admin/events/approve', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    })
+  }
+
+  async inviteStaff(email) {
+    return this.request('/api/auth/invite', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  }
+
+  // Density Map Endpoints (legacy - kept for compatibility)
+  async getDensityMapLegacy() {
     return this.request('/api/admin/density-map')
   }
 
-  // Reports Endpoints
+  // Reports Endpoints (legacy - kept for compatibility)
   async getFailureReports() {
     return this.request('/api/admin/failure-reports')
   }
@@ -279,7 +410,7 @@ class ApiService {
     return this.request('/api/admin/analytics')
   }
 
-  // Meeting Requests Endpoints
+  // Meeting Requests Endpoints (legacy - kept for compatibility)
   async getMeetingRequests() {
     return this.request('/api/clusters/meeting-requests')
   }
